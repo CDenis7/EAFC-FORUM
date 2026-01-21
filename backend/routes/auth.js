@@ -12,49 +12,68 @@ router.post('/register', async (req, res) => {
   }
 
   try {
+    const countRes = await db.query('SELECT COUNT(*) FROM users');
+    const userCount = parseInt(countRes.rows[0].count, 10);
+    const assignedRole = userCount === 0 ? 'admin' : 'user';
+
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
-    const newUserQuery = 'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id, username, email';
-    const { rows } = await db.query(newUserQuery, [username, email, passwordHash]);
+    
+    const newUserQuery = `
+      INSERT INTO users (username, email, password_hash, role) 
+      VALUES ($1, $2, $3, $4) 
+      RETURNING id, username, email, role
+    `;
+    
+    const { rows } = await db.query(newUserQuery, [username, email, passwordHash, assignedRole]);
     const user = rows[0];
-    const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.status(201).json({ token, user });
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({ 
+      token, 
+      user, 
+      message: assignedRole === 'admin' ? 'Cont de administrator creat automat.' : 'Înregistrare reușită.' 
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Eroare la înregistrare. Este posibil ca email-ul sau username-ul să existe deja.' });
+    console.error('Registration Error:', error);
+    res.status(500).json({ error: 'Înregistrarea a eșuat. Username-ul sau email-ul ar putea fi deja utilizate.' });
   }
 });
 
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-        return res.status(400).json({ error: 'Email-ul și parola sunt obligatorii.' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email-ul și parola sunt obligatorii.' });
+  }
+
+  try {
+    const { rows } = await db.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = rows[0];
+
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      return res.status(401).json({ error: 'Credentiale invalide.' });
     }
+    
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '24h' }
+    );
 
-    try {
-        const userQuery = 'SELECT * FROM users WHERE email = $1';
-        const { rows } = await db.query(userQuery, [email]);
-        const user = rows[0];
-
-        if (!user) {
-            return res.status(401).json({ error: 'Credentiale invalide.' });
-        }
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Credentiale invalide.' });
-        }
-        
-        const token = jwt.sign({ id: user.id, username: user.username }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.json({ token, user: { id: user.id, username: user.username, email: user.email } });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'A apărut o eroare la login.' });
-    }
+    res.json({ 
+      token, 
+      user: { id: user.id, username: user.username, email: user.email, role: user.role } 
+    });
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ error: 'Eroare internă la login.' });
+  }
 });
-
 
 module.exports = router;

@@ -1,111 +1,51 @@
 <script setup>
 import { ref } from 'vue';
 import apiClient from '@/services/api';
-import { useAuthStore } from '@/stores/auth';
 
 const props = defineProps({
-  postId: {
-    type: [Number, String],
-    required: true,
-  },
-  parentCommentId: {
-    type: [Number, String],
-    default: null,
-  },
-  communityId: {
-    type: [Number, String],
-    required: false,
-  },
-  communityName: {
-    type: String,
-    required: false,
-  }
+  postId: [String, Number],
+  parentCommentId: [String, Number]
 });
 
 const emit = defineEmits(['comment-added']);
-const authStore = useAuthStore();
-const commentContent = ref('');
-const isLoading = ref(false);
-const error = ref(null);
+const content = ref('');
+const isSubmitting = ref(false);
 
-const handleSubmit = async () => {
-  console.log('=== ADDCOMMENTFORM DEBUG START ===');
-  console.log('Props received in AddCommentForm:', {
-    postId: props.postId,
-    parentCommentId: props.parentCommentId,
-    communityId: props.communityId,
-    communityName: props.communityName
-  });
-  console.log('=== ADDCOMMENTFORM DEBUG END ===');
-  if (!props.postId) {
-      error.value = 'Eroare: ID-ul postării lipsește. Reîncărcați pagina.';
-      return;
-  }
-  
-  if (!commentContent.value.trim()) {
-    error.value = 'Comentariul nu poate fi gol.';
-    return;
-  }
- 
+const submitComment = async () => {
+  if (!content.value.trim()) return;
+  isSubmitting.value = true;
   try {
-    isLoading.value = true;
-    error.value = null;
-   
-    const payload = {
+    const response = await apiClient.post('/comments', {
+      content: content.value,
       postId: props.postId,
-      content: commentContent.value,
-      parentCommentId: props.parentCommentId,
-    };
-    if (props.communityId) {
-      payload.communityId = props.communityId;
-    }
-    if (props.communityName) {
-      payload.communityName = props.communityName;
-    }
-
-    if (props.communityName) {
-      payload.community_name = props.communityName; 
-    }
-    if (props.communityId) {
-      payload.community_id = props.communityId; 
-    }
-
-    console.log('Payload being sent:', payload);
-    
-    await apiClient.post('/comments', payload);
-   
-    emit('comment-added');
-    commentContent.value = '';
+      parentCommentId: props.parentCommentId
+    });
+    content.value = '';
+    emit('comment-added', response.data);
   } catch (err) {
-    console.error('Eroare detaliată la adăugarea comentariului:', err);
-    console.error('Response data:', err.response?.data); 
-    error.value = err.response?.data?.error || err.response?.data?.message || 'A apărut o eroare. Vă rugăm încercați din nou.';
+    console.error("Analysis submission failed:", err);
   } finally {
-    isLoading.value = false;
+    isSubmitting.value = false;
   }
 };
 </script>
 
 <template>
-  <div class="mt-4 p-4 bg-base-300 rounded-lg">
-    <p class="text-sm mb-2">You comment like <span class="font-bold text-primary">{{ authStore.userUsername }}</span></p>
-    <form @submit.prevent="handleSubmit">
-      <textarea
-        v-model="commentContent"
-        class="textarea textarea-bordered w-full"
-        placeholder="Ce părere ai?"
-        rows="3"
-      ></textarea>
-     
-      <div v-if="error" class="text-error text-sm mt-2">
-        <span>{{ error }}</span>
-      </div>
-      <div class="flex justify-end mt-2">
-        <button type="submit" class="btn btn-primary" :disabled="isLoading">
-          <span v-if="isLoading" class="loading loading-spinner"></span>
-          Comment
-        </button>
-      </div>
-    </form>
+  <div class="space-y-3">
+    <textarea 
+      v-model="content"
+      class="textarea textarea-bordered w-full h-24 bg-[#05050a] border-white/10 focus:border-[#ccff00] rounded-none text-sm font-medium"
+      placeholder="Provide your counter-analysis..."
+    ></textarea>
+    <div class="flex justify-end">
+      <button 
+        @click="submitComment" 
+        class="btn btn-primary btn-sm rounded-none font-black italic uppercase tracking-widest"
+        :disabled="isSubmitting || !content.trim()"
+      >
+        <span v-if="isSubmitting" class="loading loading-spinner loading-xs"></span>
+        Submit Analysis
+      </button>
+    </div>
   </div>
 </template>

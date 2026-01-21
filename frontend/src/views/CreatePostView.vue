@@ -1,106 +1,80 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 
 const router = useRouter();
-const communities = ref([]);
-const selectedCommunity = ref(null);
+const route = useRoute();
+const categories = ref([]);
+const categoryId = ref(route.query.catId || '');
 const title = ref('');
 const body = ref('');
-const files = ref([]);
-const previewUrls = ref([]);
-const isLoading = ref(false);
-const error = ref(null);
+const isSubmitting = ref(false);
 
-const fetchCommunities = async () => {
+onMounted(async () => {
+  const res = await apiClient.get('/categories');
+  categories.value = res.data;
+});
+
+const submitPost = async () => {
+  if (!title.value || !categoryId.value) return;
+  isSubmitting.value = true;
   try {
-    const response = await apiClient.get('/communities');
-    communities.value = response.data;
-  } catch (error) {
-    error.value = "I couldn't load the holes.";
-  }
-};
-
-onMounted(fetchCommunities);
-
-const handleFileChange = (event) => {
-  files.value = Array.from(event.target.files);
-  previewUrls.value = files.value.map(file => URL.createObjectURL(file));
-};
-
-const handleSubmit = async () => {
-  if (!selectedCommunity.value || !title.value.trim()) {
-    error.value = 'Hole and title are required.';
-    return;
-  }
- 
-  const formData = new FormData();
-  formData.append('title', title.value);
-  formData.append('communityId', selectedCommunity.value);
-  if (body.value.trim()) {
-    formData.append('body', body.value);
-  }
-  if (files.value.length > 0) {
-    files.value.forEach(file => {
-      formData.append('files', file);
+    await apiClient.post('/posts', { 
+      title: title.value, 
+      content: body.value, 
+      category_id: categoryId.value 
     });
-  }
-
-  try {
-    isLoading.value = true;
-    error.value = null;
-    
-    const response = await apiClient.post('/posts', formData);
-    
-    router.push({ name: 'post-detail', params: { id: response.data.id } });
+    router.push(`/category/${categoryId.value}`);
   } catch (err) {
-    console.error('Error creating post:', err);
-    error.value = err.response?.data?.error || 'An error occurred.';
+    console.error(err);
   } finally {
-    isLoading.value = false;
+    isSubmitting.value = false;
   }
 };
 </script>
 
 <template>
-  <div class="max-w-2xl mx-auto">
-    <h1 class="text-3xl font-bold mb-6">Create a Post</h1>
-    <div class="card bg-base-200 shadow-xl">
-      <div class="card-body">
-        <form @submit.prevent="handleSubmit" class="space-y-4">
-          <div>
-            <label class="label"><span class="label-text">Hole</span></label>
-            <select v-model="selectedCommunity" class="select select-bordered w-full" required>
-              <option disabled :value="null">Select a Hole</option>
-              <option v-for="community in communities" :key="community.id" :value="community.id">
-                h/{{ community.name }}
-              </option>
-            </select>
-          </div>
-          <div>
-            <label class="label"><span class="label-text">Title</span></label>
-            <input v-model="title" type="text" placeholder="Un titlu interesant" class="input input-bordered w-full" required />
-          </div>
-          <div>
-            <label class="label"><span class="label-text">Text (Optional)</span></label>
-            <textarea v-model="body" class="textarea textarea-bordered h-36 w-full" placeholder="Scrie ceva aici..."></textarea>
-          </div>
-          <div>
-            <label class="label"><span class="label-text">Images/Videos (Optional)</span></label>
-            <input type="file" @change="handleFileChange" multiple class="file-input file-input-bordered w-full" accept="image/*,video/*"/>
-          </div>
-          <div v-if="previewUrls.length" class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-2">
-            <img v-for="url in previewUrls" :key="url" :src="url" class="rounded-lg object-cover h-28 w-full"/>
-          </div>
-          <div v-if="error" class="alert alert-error text-sm mt-4"><span>{{ error }}</span></div>
-          <div class="form-control mt-6">
-            <button type="submit" class="btn btn-primary" :disabled="isLoading">
-              <span v-if="isLoading" class="loading loading-spinner"></span>
-              Post
-            </button>
-          </div>
-        </form>
+  <div class="max-w-3xl mx-auto space-y-8 animate-in zoom-in duration-300">
+    <div class="border-l-8 border-[#ccff00] pl-6">
+      <h1 class="text-4xl font-black italic uppercase tracking-tighter text-white">Share New Tactic</h1>
+      <p class="text-[10px] font-bold text-[#ccff00] uppercase tracking-widest mt-1">Submit Match Intelligence</p>
+    </div>
+
+    <div class="bg-[#0a0a1a] p-10 border border-white/5 shadow-2xl space-y-8">
+      <div class="form-control">
+        <label class="label text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Game Mode Designation</label>
+        <select v-model="categoryId" class="select select-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] font-bold">
+          <option value="" disabled>Select Mode...</option>
+          <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+
+      <div class="form-control">
+        <label class="label text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Analysis Title</label>
+        <input 
+          v-model="title" 
+          type="text" 
+          placeholder="e.g. 4-3-2-1 Direct Passing Meta"
+          class="input input-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] font-black italic text-lg" 
+        />
+      </div>
+
+      <div class="form-control">
+        <label class="label text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Detailed Instructions</label>
+        <textarea 
+          v-model="body" 
+          class="textarea textarea-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] h-64 font-medium"
+          placeholder="Share player instructions, depth, and width..."
+        ></textarea>
+      </div>
+
+      <div class="flex gap-4">
+        <button @click="router.back()" class="btn btn-ghost rounded-none flex-1 font-black uppercase italic">Discard</button>
+        <button @click="submitPost" class="btn btn-primary rounded-none flex-[2] font-black uppercase italic text-lg" :disabled="isSubmitting">
+          <span v-if="isSubmitting" class="loading loading-spinner"></span>
+          Publish Tactic
+        </button>
       </div>
     </div>
   </div>

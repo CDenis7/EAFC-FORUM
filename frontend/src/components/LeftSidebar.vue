@@ -3,78 +3,54 @@ import { ref, onMounted } from 'vue';
 import { RouterLink } from 'vue-router';
 import apiClient from '@/services/api';
 
-const popularHoles = ref([]);
-const recentHoles = ref([]);
+const categories = ref([]);
 const isLoading = ref(true);
 
-const fetchSidebarData = async () => {
+onMounted(async () => {
   try {
-    isLoading.value = true;
-    const response = await apiClient.get('/communities/sidebar');
-    popularHoles.value = response.data.popular || [];
-    recentHoles.value = response.data.recent || [];
-  } catch (error) {
-    console.error("Error fetching sidebar data:", error);
+    const res = await apiClient.get('/categories');
+    categories.value = res.data;
+  } catch (err) {
+    console.error(err);
   } finally {
     isLoading.value = false;
   }
-};
-
-onMounted(fetchSidebarData);
+});
 </script>
 
 <template>
-  <div class="space-y-6">
-
-    <div class="bg-base-200 rounded-lg shadow p-4">
-        <RouterLink to="/communities" class="btn btn-primary w-full">
-            Explore Holes
-        </RouterLink>
-    </div>
-
-    <div v-if="!isLoading" class="bg-base-200 rounded-lg shadow">
-      <h3 class="font-bold p-4 pb-2 uppercase text-xs text-base-content/60">Popular Holes</h3>
-      <div class="flex flex-col p-2 space-y-1">
-        <RouterLink
-          v-for="hole in popularHoles"
-          :key="hole.id"
-          :to="`/community/${hole.id}`"
-          class="flex items-center p-2 rounded-md hover:bg-base-300 transition-colors duration-200 w-full"
-        >
-          <img
-            :src="hole.image_url || `https://placehold.co/24x24/3abff8/000000?text=${hole.name.charAt(0).toUpperCase()}`"
-            alt="Hole Icon"
-            class="w-6 h-6 rounded-full mr-3"
-          />
-          <span class="font-medium text-sm">h/{{ hole.name }}</span>
-        </RouterLink>
+  <div class="sticky top-28 space-y-4">
+    <div class="bg-[#0a0a1a] shadow-xl border-l-4 border-[#ccff00] overflow-hidden">
+      <div class="p-4 bg-[#1a1a3a] font-black uppercase italic text-xs tracking-widest text-[#ccff00] border-b border-white/5">
+        Match Center
       </div>
+      
+      <ul class="menu p-0 rounded-none">
+        <li>
+          <RouterLink to="/" class="rounded-none border-b border-white/5 py-4 px-6 hover:bg-[#ccff00] hover:text-black group transition-all">
+            <span class="font-black italic uppercase text-sm tracking-tighter">Stadium Index</span>
+          </RouterLink>
+        </li>
+        
+        <div class="p-4 pt-6 pb-2 text-[10px] font-black uppercase opacity-30 tracking-[0.2em]">Game Modes</div>
+        
+        <div v-if="isLoading" class="p-6 text-center">
+          <span class="loading loading-spinner loading-sm text-[#ccff00]"></span>
+        </div>
+        
+        <li v-for="cat in categories" :key="cat.id">
+          <RouterLink :to="`/category/${cat.id}`" class="rounded-none border-b border-white/5 py-4 px-6 hover:bg-[#ccff00] hover:text-black transition-all">
+            <span class="font-black italic uppercase text-sm tracking-tighter">{{ cat.name }}</span>
+          </RouterLink>
+        </li>
+      </ul>
     </div>
 
-    <div v-if="!isLoading" class="bg-base-200 rounded-lg shadow">
-      <h3 class="font-bold p-4 pb-2 uppercase text-xs text-base-content/60">Recent Holes</h3>
-      <div class="flex flex-col p-2 space-y-1">
-        <RouterLink
-          v-for="hole in recentHoles"
-          :key="hole.id"
-          :to="`/community/${hole.id}`"
-          class="flex items-center p-2 rounded-md hover:bg-base-300 transition-colors duration-200 w-full"
-        >
-          <img
-            :src="hole.image_url || `https://placehold.co/24x24/3abff8/000000?text=${hole.name.charAt(0).toUpperCase()}`"
-            alt="Hole Icon"
-            class="w-6 h-6 rounded-full mr-3"
-          />
-          <span class="font-medium text-sm">h/{{ hole.name }}</span>
-        </RouterLink>
-      </div>
+    <div class="p-6 bg-[#ccff00]/5 border border-[#ccff00]/20">
+      <div class="text-[10px] font-black uppercase text-[#ccff00] mb-2 tracking-widest">Live Updates</div>
+      <p class="text-[11px] font-bold opacity-60 leading-relaxed uppercase">
+        Market crash expected after 6PM content drop. Check Tactics section for Meta formations.
+      </p>
     </div>
-
-    <div v-if="isLoading" class="space-y-6">
-        <div class="skeleton h-12 w-full"></div>
-        <div class="skeleton h-32 w-full"></div>
-        <div class="skeleton h-32 w-full"></div>
-    </div>
-
   </div>
 </template>

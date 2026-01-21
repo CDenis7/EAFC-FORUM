@@ -1,30 +1,26 @@
 <script setup>
 import { ref } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-import { RouterLink } from 'vue-router';
 
 const authStore = useAuthStore();
-
 const email = ref('');
 const password = ref('');
+const error = ref('');
 const isLoading = ref(false);
-const error = ref(null);
 
 const handleLogin = async () => {
-  if (!email.value || !password.value) {
-    error.value = 'Email-ul și parola sunt obligatorii.';
-    return;
-  }
+  if (!email.value || !password.value) return;
+  
+  isLoading.value = true;
+  error.value = '';
   
   try {
-    isLoading.value = true;
-    error.value = null;
     await authStore.login({
       email: email.value,
-      password: password.value,
+      password: password.value
     });
   } catch (err) {
-    error.value = err.response?.data?.error || 'A apărut o eroare la login.';
+    error.value = err.response?.data?.error || "Login sequence failed. Check credentials.";
   } finally {
     isLoading.value = false;
   }
@@ -32,50 +28,61 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="flex justify-center items-center mt-10">
-    <div class="card w-full max-w-sm bg-base-200 shadow-xl">
-      <div class="card-body">
-        <h2 class="card-title justify-center text-2xl">Welcome Back!</h2>
-        
-        <form @submit.prevent="handleLogin">
-          <div class="form-control">
+  <div class="min-h-[70vh] flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md animate-in zoom-in duration-500">
+      <div class="mb-8 border-l-8 border-[#ccff00] pl-6 py-2">
+        <h1 class="text-4xl font-black italic uppercase tracking-tighter text-white">Access Squad Hub</h1>
+        <p class="text-[10px] font-bold text-[#ccff00] uppercase tracking-widest mt-1">Enter credentials to sync records</p>
+      </div>
+
+      <div class="bg-[#0a0a1a] shadow-2xl border border-white/5 relative overflow-hidden">
+        <div class="p-10 space-y-6">
+          <div v-if="error" class="bg-error/10 border-l-4 border-error p-3 text-error text-[10px] font-black uppercase italic">
+            {{ error }}
+          </div>
+
+          <div class="form-control w-full">
             <label class="label">
-              <span class="label-text">Email</span>
+              <span class="label-text text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Email Address</span>
             </label>
             <input 
-              v-model="email"
+              v-model="email" 
               type="email" 
-              placeholder="email@example.com" 
-              class="input input-bordered" 
-              required
+              placeholder="squad.member@eafc" 
+              class="input input-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] font-bold h-12"
             />
           </div>
-          <div class="form-control">
+
+          <div class="form-control w-full">
             <label class="label">
-              <span class="label-text">Password</span>
+              <span class="label-text text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Security Code</span>
             </label>
             <input 
-              v-model="password"
+              v-model="password" 
               type="password" 
               placeholder="••••••••" 
-              class="input input-bordered" 
-              required
+              class="input input-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] font-bold h-12"
+              @keyup.enter="handleLogin"
             />
           </div>
-          <div v-if="error" class="alert alert-error text-sm mt-4">
-            <span>{{ error }}</span>
+
+          <button 
+            @click="handleLogin" 
+            class="btn btn-primary w-full rounded-none font-black uppercase italic text-lg h-14 shadow-lg shadow-[#ccff00]/20 mt-4 group"
+            :disabled="isLoading"
+          >
+            <span v-if="isLoading" class="loading loading-spinner"></span>
+            <span v-else class="flex items-center gap-2">
+              Enter Pitch <span class="group-hover:translate-x-1 transition-transform">→</span>
+            </span>
+          </button>
+
+          <div class="text-center mt-6">
+            <p class="text-[10px] font-bold opacity-40 uppercase tracking-widest mb-2">New to the squad?</p>
+            <RouterLink to="/register" class="text-xs font-black uppercase text-[#ccff00] hover:underline italic">
+              Sign Membership Contract
+            </RouterLink>
           </div>
-          <div class="form-control mt-6">
-            <button class="btn btn-primary" type="submit" :disabled="isLoading">
-              <span v-if="isLoading" class="loading loading-spinner"></span>
-              Login
-            </button>
-          </div>
-        </form>
-        <div class="text-center mt-4 text-sm">
-          <p>Don't have an account? 
-            <RouterLink to="/register" class="link link-secondary">Register here</RouterLink>
-          </p>
         </div>
       </div>
     </div>

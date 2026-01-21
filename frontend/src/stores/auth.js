@@ -1,63 +1,53 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
 import apiClient from '@/services/api';
-import { useRouter } from 'vue-router';
+import router from '@/router';
 
-export const useAuthStore = defineStore('auth', () => {
-  const token = ref(localStorage.getItem('token') || null);
-  const user = ref(JSON.parse(localStorage.getItem('user')) || null);
-  const router = useRouter();
-  const isAuthenticated = computed(() => !!token.value);
-  const userUsername = computed(() => user.value?.username || 'Guest');
-  async function register(credentials) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    token.value = null;
-    user.value = null;
-
-    const response = await apiClient.post('/auth/register', credentials);
-    const responseData = response.data;
+export const useAuthStore = defineStore('auth', {
+  state: () => ({
+    token: localStorage.getItem('token') || null,
+    user: JSON.parse(localStorage.getItem('user')) || null,
+  }),
+  
+  getters: {
+    isAuthenticated: (state) => !!state.token,
+    isAdmin: (state) => state.user?.role === 'admin',
+    isModerator: (state) => state.user?.role === 'moderator' || state.user?.role === 'admin',
+    isOwner: (state) => (username) => state.user?.username === username,
+  },
+  
+  actions: {
+    async login(credentials) {
+      const response = await apiClient.post('/auth/login', credentials);
+      this.setAuth(response.data.token, response.data.user);
+      router.push('/');
+    },
     
-    token.value = responseData.token;
-    user.value = responseData.user;
-    localStorage.setItem('token', responseData.token);
-    localStorage.setItem('user', JSON.stringify(responseData.user));
+    async register(userData) {
+      const response = await apiClient.post('/auth/register', userData);
+      this.setAuth(response.data.token, response.data.user);
+      router.push('/');
+    },
 
-    router.push('/');
-  }
-  async function login(credentials) {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    token.value = null;
-    user.value = null;
+    updateUser(updatedUser) {
+      this.user = { ...this.user, ...updatedUser };
+      localStorage.setItem('user', JSON.stringify(this.user));
+    },
     
-    const response = await apiClient.post('/auth/login', credentials);
-    const responseData = response.data;
-
-    token.value = responseData.token;
-    user.value = responseData.user;
-    localStorage.setItem('token', responseData.token);
-    localStorage.setItem('user', JSON.stringify(responseData.user));
-
-    router.push('/');
-  }
-
-  function logout() {
-    token.value = null;
-    user.value = null;
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    setAuth(token, user) {
+      this.token = token;
+      this.user = user;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    },
     
-    router.push('/login');
+    logout() {
+      this.token = null;
+      this.user = null;
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      delete apiClient.defaults.headers.common['Authorization'];
+      router.push('/login');
+    }
   }
-
-  return {
-    token,
-    user,
-    isAuthenticated,
-    userUsername,
-    register,
-    login, 
-    logout,
-  };
 });

@@ -1,79 +1,48 @@
 <script setup>
-import { ref } from 'vue';
-import { RouterLink, useRouter } from 'vue-router';
+import { RouterLink } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
-
-
 const authStore = useAuthStore();
-const router = useRouter();
-const searchQuery = ref('');
-
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    router.push({ name: 'search', query: { q: searchQuery.value } });
-    searchQuery.value = '';
-  }
-};
-
-const handleLogout = () => {
-  authStore.logout();
-};
 </script>
 
 <template>
-  <div class="navbar bg-base-300 shadow sticky top-0 z-50">
+  <div class="navbar bg-[#0a0a1a] border-b-2 border-[#ccff00] px-4 md:px-8 py-3 sticky top-0 z-50 shadow-2xl">
     <div class="navbar-start">
-      <RouterLink to="/" class="btn btn-ghost text-sm sm:text-xl font-bold">
-       <img 
-         src="../assets/logo.png" 
-         alt="RabbitHole Logo" 
-         class="h-6 w-auto sm:h-8 md:h-10 lg:h-12" 
-       />
+      <RouterLink to="/" class="group flex items-center gap-2">
+       <span class="text-3xl font-black italic uppercase tracking-tighter text-[#ccff00] group-hover:text-white transition-colors">
+         FC<span class="text-white group-hover:text-[#ccff00]">FORUM</span>
+       </span>
+       <div class="bg-[#ccff00] h-6 w-1 -skew-x-12"></div>
       </RouterLink>
     </div>
-    <div class="navbar-center hidden sm:flex sm:w-1/2 lg:w-1/3">
-      <form @submit.prevent="handleSearch" class="form-control w-full">
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search the RabbitHole"
-          class="input input-bordered w-full"
-        />
-      </form>
-    </div>
-
-    <div class="navbar-end gap-1 sm:gap-2">
-      <div class="dropdown dropdown-end sm:hidden">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-        <div tabindex="0" class="dropdown-content mt-3 z-[1] p-4 shadow bg-base-200 rounded-box w-80">
-          <form @submit.prevent="handleSearch" class="form-control w-full">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search the RabbitHole"
-              class="input input-bordered w-full"
-            />
-          </form>
-        </div>
-      </div>
+    
+    <div class="navbar-end gap-4">
       <template v-if="!authStore.isAuthenticated">
-        <RouterLink to="/login" class="btn btn-outline btn-sm sm:btn-md">Login</RouterLink>
-        <RouterLink to="/register" class="btn btn-primary btn-sm sm:btn-md">Register</RouterLink>
+        <RouterLink to="/login" class="text-xs font-black uppercase tracking-widest hover:text-[#ccff00] transition-colors">Login</RouterLink>
+        <RouterLink to="/register" class="btn btn-sm btn-primary rounded-none font-black italic uppercase px-6">Join Club</RouterLink>
       </template>
+
       <template v-else>
         <div class="dropdown dropdown-end">
-          <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
-             <div class="w-8 sm:w-10 rounded-full">
-                <img alt="User Avatar" src="https://placehold.co/40x40/3abff8/000000?text=U" />
+          <div tabindex="0" role="button" class="flex items-center gap-3 cursor-pointer group">
+            <div class="text-right hidden sm:block">
+              <div class="text-xs font-black uppercase italic tracking-tighter">{{ authStore.user?.username }}</div>
+              <div class="text-[9px] font-bold text-[#ccff00] uppercase">{{ authStore.user?.role }}</div>
+            </div>
+            <div class="avatar online">
+              <div class="w-10 rounded-none border-2 border-[#ccff00] group-hover:border-white transition-colors">
+                <img v-if="authStore.user?.avatar_url" :src="authStore.user.avatar_url" />
+                <div v-else class="bg-[#1a1a3a] flex items-center justify-center h-full text-xl font-black text-white/20">
+                  {{ authStore.user?.username[0] }}
+                </div>
               </div>
+            </div>
           </div>
-          <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-200 rounded-box w-52">
-            <li><RouterLink :to="`/user/${authStore.user.username}`">Profile</RouterLink></li>
-            <li><a @click.prevent="handleLogout">Logout</a></li>
+          <ul tabindex="0" class="menu menu-md dropdown-content mt-4 z-[100] p-2 shadow-2xl bg-[#0a0a1a] border-2 border-[#ccff00] rounded-none w-56">
+            <li class="p-2 text-[10px] font-black uppercase text-[#ccff00] opacity-50 tracking-widest">Player Menu</li>
+            <li><RouterLink :to="`/user/${authStore.user?.username}`" class="rounded-none font-bold uppercase text-xs italic"> Squad Member Profile</RouterLink></li>
+            <li v-if="authStore.isAdmin"><RouterLink to="/admin" class="rounded-none font-bold uppercase text-xs italic text-[#ccff00]">Manager Panel</RouterLink></li>
+            <div class="divider my-0 opacity-10"></div>
+            <li><a @click.prevent="authStore.logout()" class="rounded-none font-bold uppercase text-xs italic text-error">Logout Session</a></li>
           </ul>
         </div>
       </template>

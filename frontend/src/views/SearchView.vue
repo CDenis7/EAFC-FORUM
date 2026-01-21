@@ -1,106 +1,82 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute, RouterLink } from 'vue-router';
+import { ref, watch, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import apiClient from '@/services/api';
 import PostCard from '@/components/PostCard.vue';
 
 const route = useRoute();
-const posts = ref([]);
-const holes = ref([]);
-const users = ref([]);
+const results = ref({ quests: [], guilds: [] });
 const isLoading = ref(true);
 const error = ref(null);
-const activeTab = ref('posts'); 
 
-const query = computed(() => route.query.q || '');
-
-const performSearch = async (searchQuery) => {
-  if (!searchQuery) {
-    posts.value = [];
-    holes.value = [];
-    users.value = [];
-    isLoading.value = false;
-    return;
-  }
+const performSearch = async () => {
+  const query = route.query.q;
+  if (!query) return;
 
   try {
     isLoading.value = true;
     error.value = null;
-    const response = await apiClient.get('/search', {
-      params: { q: searchQuery }
-    });
-    posts.value = response.data.posts || [];
-    holes.value = response.data.holes || [];
-    users.value = response.data.users || [];
-  } catch (err) {
-    console.error('Error performing search:', err);
-    error.value = 'An error occurred during the search.';
+    const response = await apiClient.get(`/search?q=${query}`);
+    results.value = response.data;
+  } catch (error) {
+    error.value = "The search system failed to scan the logs.";
   } finally {
     isLoading.value = false;
   }
 };
 
-onMounted(() => {
-  performSearch(query.value);
-});
-
-watch(query, (newQuery) => {
-  performSearch(newQuery);
-});
+onMounted(performSearch);
+watch(() => route.query.q, performSearch);
 </script>
 
 <template>
-  <div>
-    <div class="border-b border-base-300 mb-6">
-        <p class="text-sm">Search results for</p>
-        <h1 class="text-2xl font-bold">"{{ query }}"</h1>
-       
-                <div role="tablist" class="tabs tabs-bordered mt-4">
-            <a role="tab" class="tab" :class="{'tab-active': activeTab === 'posts'}" @click="activeTab = 'posts'">Posts</a>
-            <a role="tab" class="tab" :class="{'tab-active': activeTab === 'holes'}" @click="activeTab = 'holes'">Holes</a>
-            <a role="tab" class="tab" :class="{'tab-active': activeTab === 'users'}" @click="activeTab = 'users'">Users</a>
-        </div>
+  <div class="space-y-8">
+    <div class="bg-base-200 p-6 rounded-2xl border-l-4 border-accent shadow-lg">
+      <h1 class="text-3xl font-black italic uppercase tracking-tighter">
+        🔍 Search Results for: <span class="text-accent">"{{ route.query.q }}"</span>
+      </h1>
     </div>
 
-        <div v-if="isLoading" class="text-center p-10">
-      <span class="loading loading-lg loading-spinner text-primary"></span>
-    </div>
-        <div v-else-if="error" class="alert alert-error"><span>{{ error }}</span></div>
-   
-        <div v-show="activeTab === 'posts'">
-        <div v-if="posts.length > 0">
-            <PostCard v-for="post in posts" :key="post.id" :post="post" />
-        </div>
-        <div v-else class="text-center p-6 bg-base-200 rounded-lg"><p>No posts found for this query.</p></div>
+    <div v-if="isLoading" class="flex justify-center py-20">
+      <span class="loading loading-infinity loading-lg text-accent"></span>
     </div>
 
-        <div v-show="activeTab === 'holes'">
-        <div v-if="holes.length > 0" class="space-y-2">
-            <div v-for="hole in holes" :key="hole.id" class="p-4 bg-base-200 rounded-lg flex items-center justify-between">
-                <RouterLink :to="`/community/${hole.id}`" class="flex items-center gap-4">
-                    <img :src="hole.image_url || `https://placehold.co/40x40/3abff8/000000?text=${hole.name.charAt(0).toUpperCase()}`" class="w-10 h-10 rounded-full"/>
-                    <span class="font-bold">h/{{ hole.name }}</span>
-                </RouterLink>
-                <button class="btn btn-primary btn-sm">Join</button>
+    <div v-else-if="error" class="alert alert-error">{{ error }}</div>
+
+    <div v-else class="space-y-10">
+      <section v-if="results.guilds.length > 0">
+        <h3 class="text-xs font-black uppercase tracking-[0.3em] opacity-40 mb-4 px-2">Discovered Guilds</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <RouterLink 
+            v-for="guild in results.guilds" 
+            :key="guild.id" 
+            :to="`/community/${guild.id}`"
+            class="card bg-base-300 hover:bg-base-200 border border-white/5 transition-colors"
+          >
+            <div class="card-body p-4 flex-row items-center gap-4">
+              <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-lg w-12">
+                  <span class="text-xl">🛡️</span>
+                </div>
+              </div>
+              <div>
+                <h4 class="font-black italic uppercase text-primary">/g/{{ guild.name }}</h4>
+                <p class="text-xs opacity-60 line-clamp-1">{{ guild.description }}</p>
+              </div>
             </div>
+          </RouterLink>
         </div>
-        <div v-else class="text-center p-6 bg-base-200 rounded-lg"><p>No holes found for this query.</p></div>
-    </div>
-   
-        <div v-show="activeTab === 'users'">
-        <div v-if="users.length > 0" class="space-y-2">
-            <div v-for="user in users" :key="user.id" class="p-4 bg-base-200 rounded-lg">
-                <RouterLink :to="`/user/${user.username}`" class="flex items-center gap-4">
-                    <div class="avatar placeholder">
-                        <div class="bg-neutral-focus text-neutral-content rounded-full w-10">
-                            <span>{{ user.username.charAt(0).toUpperCase() }}</span>
-                        </div>
-                    </div>
-                    <span class="font-bold">r/{{ user.username }}</span>
-                </RouterLink>
-            </div>
+      </section>
+
+      <section>
+        <h3 class="text-xs font-black uppercase tracking-[0.3em] opacity-40 mb-4 px-2">Relevant Quests</h3>
+        <div v-if="results.quests.length > 0" class="space-y-4">
+          <PostCard v-for="post in results.quests" :key="post.id" :post="post" />
         </div>
-        <div v-else class="text-center p-6 bg-base-200 rounded-lg"><p>No users found for this query.</p></div>
+        <div v-else class="text-center py-10 opacity-30 italic bg-base-200 rounded-xl">
+          No matching quests found in the archives.
+        </div>
+      </section>
     </div>
   </div>
 </template>
