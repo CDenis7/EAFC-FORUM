@@ -6,6 +6,7 @@ import LoginView from '@/views/LoginView.vue';
 import RegisterView from '@/views/RegisterView.vue';
 import PostDetailView from '@/views/PostDetailView.vue';
 import CreatePostView from '@/views/CreatePostView.vue';
+import EditPostView from '@/views/EditPostView.vue';
 import UserProfileView from '@/views/UserProfileView.vue';
 import SettingsView from '@/views/SettingsView.vue';
 import AdminPanelView from '@/views/AdminPanelView.vue';
@@ -16,6 +17,7 @@ const routes = [
   { path: '/login', name: 'login', component: LoginView },
   { path: '/register', name: 'register', component: RegisterView },
   { path: '/thread/:id', name: 'post-detail', component: PostDetailView },
+  { path: '/thread/:id/edit', name: 'post-edit', component: EditPostView, meta: { requiresAuth: true } },
   { path: '/category/:id', name: 'category-detail', component: CategoryDetailView },
   { path: '/submit', name: 'post-create', component: CreatePostView, meta: { requiresAuth: true } },
   { path: '/user/:username', name: 'user-profile', component: UserProfileView },
