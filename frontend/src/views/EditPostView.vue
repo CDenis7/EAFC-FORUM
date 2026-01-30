@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import apiClient from '@/services/api';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -67,10 +68,7 @@ const updateTactic = async () => {
 
       <div class="form-control">
         <label class="label text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Detailed Instructions</label>
-        <textarea 
-          v-model="content" 
-          class="textarea textarea-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] h-64 font-medium leading-relaxed"
-        ></textarea>
+        <RichTextEditor v-model="content" />
       </div>
 
       <div class="flex gap-4">
@@ -82,4 +80,4 @@ const updateTactic = async () => {
       </div>
     </div>
   </div>
-</template>
+</template> 

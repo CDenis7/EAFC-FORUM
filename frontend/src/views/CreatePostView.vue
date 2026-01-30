@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import apiClient from '@/services/api';
+import RichTextEditor from '@/components/RichTextEditor.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -62,11 +63,8 @@ const submitPost = async () => {
 
       <div class="form-control">
         <label class="label text-[10px] font-black uppercase text-[#ccff00] tracking-widest">Detailed Instructions</label>
-        <textarea 
-          v-model="body" 
-          class="textarea textarea-bordered rounded-none bg-[#1a1a3a] border-white/10 focus:border-[#ccff00] h-64 font-medium"
-          placeholder="Share player instructions, depth, and width..."
-        ></textarea>
+        <!-- Replaced Textarea with RichTextEditor -->
+        <RichTextEditor v-model="body" />
       </div>
 
       <div class="flex gap-4">

@@ -174,7 +174,6 @@ onMounted(fetchPost);
         <div class="flex-1 p-6 md:p-10 min-w-0">
             <div class="flex justify-between items-start mb-6">
                 <div class="flex flex-col">
-                    <!-- Removed Post Number Display -->
                     <span class="text-[10px] font-black uppercase tracking-[0.2em] text-[#ccff00]">Formation Tactic</span>
                     <span class="text-xs font-bold opacity-40 uppercase">By {{ post.author }} in {{ post.category_name }}</span>
                 </div>
@@ -199,9 +198,11 @@ onMounted(fetchPost);
                 {{ post.title }}
             </h1>
             
-            <p class="text-lg opacity-80 leading-relaxed whitespace-pre-wrap font-medium border-l-4 border-white/5 pl-6 py-2 break-words">
-                {{ post.content }}
-            </p>
+            <!-- Updated to use v-html and rich-text-content class -->
+            <div 
+              class="rich-text-content text-lg opacity-80 leading-relaxed font-medium border-l-4 border-white/5 pl-6 py-2 break-words"
+              v-html="post.content"
+            ></div>
         </div>
       </div>
 
@@ -226,3 +227,33 @@ onMounted(fetchPost);
     </div>
   </div>
 </template>
+
+<style>
+/* Scoped styles for the rich text content inside the post detail */
+.rich-text-content p {
+  margin-bottom: 0.75rem;
+}
+.rich-text-content strong {
+  font-weight: 900;
+  color: white;
+}
+.rich-text-content em {
+  font-style: italic;
+  color: #ccff00;
+}
+.rich-text-content h2 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-style: italic;
+  color: white;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.rich-text-content h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: white;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+</style>

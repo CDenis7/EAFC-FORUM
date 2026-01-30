@@ -4,6 +4,14 @@ import { RouterLink } from 'vue-router';
 defineProps({
   post: Object
 });
+
+// Helper function to strip HTML tags for plain text preview
+const stripHtml = (html) => {
+  if (!html) return '';
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+};
 </script>
 
 <template>
@@ -33,9 +41,9 @@ defineProps({
           {{ post.title }}
         </h3>
         
-        <!-- Content Preview: Max 3 lines -->
+        <!-- Content Preview: Max 3 lines, HTML stripped -->
         <p class="text-sm text-white/60 font-medium line-clamp-3 mb-4 leading-relaxed break-words">
-          {{ post.content }}
+          {{ stripHtml(post.content) }}
         </p>
         
         <div class="flex gap-4 items-center mt-auto">

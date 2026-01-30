@@ -145,22 +145,7 @@ watch(() => route.params.username, fetchUser);
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-
-        <div class="lg:col-span-1 space-y-6">
-          <h3 class="text-xl font-black italic uppercase text-white border-l-4 border-[#ccff00] pl-4">Career Milestones</h3>
-          <div class="grid gap-2">
-            <div v-for="ach in achievements" :key="ach.name" class="bg-[#0a0a1a] p-4 border border-white/5 flex items-center gap-4 group hover:border-[#ccff00] transition-all">
-              <div class="text-2xl opacity-30 group-hover:opacity-100 group-hover:scale-110 transition-all text-[#ccff00]">★</div>
-              <div>
-                <div class="text-xs font-black uppercase text-white tracking-tighter">{{ ach.name }}</div>
-                <div class="text-[9px] font-bold opacity-30 uppercase">{{ ach.description }}</div>
-              </div>
-            </div>
-            <div v-if="achievements.length === 0" class="text-center py-10 opacity-20 font-black uppercase italic text-xs">No Records Found</div>
-          </div>
-        </div>
-
-        <div class="lg:col-span-2 space-y-6">
+      <div class="lg:col-span-2 space-y-6">
           <h3 class="text-xl font-black italic uppercase text-white border-l-4 border-[#ccff00] pl-4">Tactical Analysis Feed</h3>
           <div class="grid gap-4">
             <PostCard v-for="post in posts" :key="post.id" :post="post" />
