@@ -45,12 +45,5 @@ onMounted(async () => {
         </li>
       </ul>
     </div>
-
-    <div class="p-6 bg-[#ccff00]/5 border border-[#ccff00]/20">
-      <div class="text-[10px] font-black uppercase text-[#ccff00] mb-2 tracking-widest">Live Updates</div>
-      <p class="text-[11px] font-bold opacity-60 leading-relaxed uppercase">
-        Market crash expected after 6PM content drop. Check Tactics section for Meta formations.
-      </p>
-    </div>
-  </div>
+ </div>
 </template>

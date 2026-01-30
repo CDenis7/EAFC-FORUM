@@ -82,24 +82,7 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
-    <div class="card bg-[#0a0a1a] shadow-xl border-l-4 border-[#ccff00] rounded-none">
-      <div class="p-4 bg-[#1a1a3a] border-b border-white/5">
-        <h3 class="font-black uppercase italic text-xs tracking-widest text-[#ccff00]">Club Records</h3>
       </div>
-      
-      <div class="p-5 space-y-4">
-        <div class="flex justify-between items-center">
-          <span class="text-[10px] font-bold uppercase opacity-40">Match Tactics</span>
-          <span class="text-xl font-black text-white">{{ stats.totalPosts || 0 }}</span>
-        </div>
-        <div class="flex justify-between items-center">
-          <span class="text-[10px] font-bold uppercase opacity-40">Active Squad</span>
-          <span class="text-xl font-black text-white">{{ stats.totalUsers || 0 }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <style scoped>
